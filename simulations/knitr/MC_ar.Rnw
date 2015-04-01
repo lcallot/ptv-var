@@ -1,0 +1,138 @@
+
+\documentclass[11pt,oneside, a4paper]{amsart}
+\usepackage{natbib}
+
+\usepackage{amsbsy,amsmath}
+\usepackage{amssymb,amsfonts}
+\usepackage{bbm}%give 1 with dbl vertical bar 
+\usepackage{booktabs,url,enumerate}
+\usepackage{color,xcolor,colortbl}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{tikz}
+\usepackage{rotating,graphicx,lscape}
+\usepackage{commath}
+\usetikzlibrary{arrows,positioning} 
+\usepackage[hypcap]{caption}
+\newcommand{\sgn}{\mathrm{sign}}
+\usepackage{setspace}
+
+% bold rows
+\usepackage{array}
+\newcolumntype{$}{>{\global\let\currentrowstyle\relax}}
+\newcolumntype{^}{>{\currentrowstyle}}
+\newcommand{\rowstyle}[1]{\gdef\currentrowstyle{#1}%
+  #1\ignorespaces
+}
+
+% Invisible table columns!
+\newcolumntype{H}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}% Properly placed sideways table with asmart class. 
+
+\setlength\rotFPtop{0pt plus 1fil} 
+
+
+\usepackage[top=1.5cm, bottom=1.5cm, left=3.0cm, right=3.0cm]{geometry}
+
+\DeclareMathOperator{\Med}{\mathbb{M}ed}
+\DeclareMathOperator{\Mean}{\mathbb{M}ean}
+\DeclareMathOperator{\Cov}{\mathbb{C}ov}
+\DeclareMathOperator{\Var}{\mathbb{V}ar}
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\nid}{NID}
+\DeclareMathOperator{\N}{\mathcal{N}}
+\DeclareMathOperator{\corr}{corr}
+\DeclareMathOperator{\diag}{diag}
+\onehalfspace
+
+
+\definecolor{LightRed}{rgb}{1,.88,.88}
+\definecolor{LightBlue}{rgb}{.88,.88,1}
+\definecolor{LightGreen}{rgb}{.88,1,.88}
+
+\newtheorem{theorem}{Theorem}
+\begin{document}
+	
+\title{ Monte Carlos parsimoniously time varying parameter models.\\ AR DGPs.}   
+\author{LAFC JTK}
+\date{\today}
+\maketitle
+
+<<ar-init,eval=TRUE,echo=FALSE,cache=FALSE,results='hide',message=FALSE>>=
+#	Loading required libraries. The dependencies should be installed as well. 
+require('parsimonious')
+require('reshape2')
+require('ggplot2')
+require('Matrix')
+require('glmnet')
+require('xtable')
+require('parallel')
+
+#Sourcing the subs
+source('../subs/mc_parsimonious.R')
+
+@
+
+
+
+<<ptv-ar,cache=TRUE,cache.lazy=FALSE>>=
+load('../mcsaves/mc_ar')
+
+# preparing the data 
+mxp <- melt(mcxp)
+colnames(mxp) <- c('Time','Variable','value','Estimator','iter','Experiment')
+mxp$iter <- factor(mxp$iter)
+
+xpnames <- unique(mxp$Experiment)
+
+xn <- matrix(unlist(strsplit(x = mxp$Experiment,split=' ')),ncol=2,byrow = TRUE)
+colnames(xn) <- c('gamma1','gamma2')
+mxp$gamma1 <- xn[,1]
+mxp$gamma2 <- xn[,2]
+
+@
+
+
+
+<<plot-ar,dependson='ptv-ar',cache=TRUE,fig.height=5>>=	
+npath	<- 5
+mxp.plt <- subset(mxp,(iter%in%c(1:npath)) &  (Estimator!='lambda') )
+# plotting
+print(mcpltgrid(mxp.plt,ar=TRUE))
+
+
+@
+
+
+<<table-ar,dependson='ptv-ar',cache=TRUE>>=
+statn <- c('Nbr. breaks','False positive','True positive','False negative','Esti. error l1','Pred. error l2','rmse','Lambda')
+en <- c('Lasso','aLasso','Post')
+
+mc <- length(mcxp[[1]])
+ptvtbl <- ptv.xptab(mcxp=mcxp,statn=statn,en=en,mc=mc)
+
+#Nbr breaks in the DGP path
+nbrk <- ptvtbl[,1,'DGP']
+# Formating the table
+mtbl <- melt(ptvtbl)
+mtbl <- subset(mtbl,Estimator!='DGP')
+tbl <-  acast(mtbl,Stat + Estimator ~ Experiment)
+tbl[which(is.na(tbl),arr.ind = TRUE)] <- 0
+@
+
+
+<<prt-xtb-ar,results='asis',cache=TRUE,dependson='table-ar',echo=FALSE>>=
+xpntmp <- gsub(x=xpnames,replacement = '=',pattern='==')
+xpntmp <- do.call(rbind,strsplit(xpntmp,' '))
+xpntmp <- apply(xpntmp,c(1,2),function(x)paste0('$\\',x,'$'))
+#xpntmp <- apply(xpntmp,1,function(x)paste0(x[1],', ', x[2]))
+
+#Printing the table
+catmctab(tbl=tbl,statn=statn,clabel=xpntmp[,1],tlabel='ar',nbrk=nbrk,clabel2=xpntmp[,2])
+
+@
+
+
+
+
+
+\end{document}
