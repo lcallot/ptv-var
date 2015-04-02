@@ -28,7 +28,8 @@ In addition the following packages should be installed : _ggplot2_, _gridExtra_,
 + __PTVApp.R__ estimates the model with two lags and produces the figures _out.pdf_ and _inf.pdf_. 
 + __PTVApp\_1lag.R__ estimates the two models with 1 lag and produces _1lag.pdf_ and _ptv\_rho.pdf_.
 + __FREDData.RData__ contains the data downloaded from the St. Louis Fed. If _FREDData.RData_ is not found when running one of the two previous file the data is downloaded using FRED's API and automatically formatted. Use it if you want to automatically update the plots with more recent data.   
-+ __Libs.R__ contains functions.
++ __Libs.R__ contains functions. The DeTrend1 function has been taken from the replication files for "Hansen, P. R., A. Lunde, and J. M. Nason (2011). The model confidence set. Econometrica 79(2), 453–497" available [here](https://www.econometricsociety.org/content/supplement-model-confidence-set-0)
+
 
 
 ### /simulations
