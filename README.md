@@ -2,7 +2,7 @@
 ## Laurent Callot and Johannes Tang Kristensen.
 
 
-[Link to the paper](http://lcallot.github.io/wp/ptv-var/)
+[Link to the paper](http://lcallot.github.io/wp/ptv-var)
 
 ---
 
